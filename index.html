@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>冰与金属摩擦实验数据平台</title>
+  <script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+  <script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+  <script src="https://modao.cc/agent-py/static/source/js/echarts.min.5.4.3.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    body {
+      background-color: #060b19;
+      color: #e2e8f0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: auto;
+      padding-bottom: 40px;
+    }
+    .tech-border {
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(34, 211, 238, 0.05);
+    }
+    .glow-text {
+      text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+    }
+    .input-dark {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      color: #94a3b8;
+    }
+    .input-dark:focus {
+      border-color: #22d3ee;
+      outline: none;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
+    }
+    .btn-blue {
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+      transition: all 0.3s;
+    }
+    .btn-blue:hover {
+      filter: brightness(1.2);
+      box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+    }
+    .btn-outline {
+      border: 1px solid #334155;
+      background: rgba(30, 41, 59, 0.5);
+      transition: all 0.3s;
+    }
+    .btn-outline:hover {
+      border-color: #22d3ee;
+      color: #22d3ee;
+    }
+    .btn-green {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      transition: all 0.3s;
+    }
+    .btn-green:hover {
+      filter: brightness(1.2);
+      box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+    .corner-decoration {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-color: #22d3ee;
+    }
+    .friction-toggle {
+      color: #ffffff;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .friction-tag {
+      color: #ffffff;
+      transition: color 0.2s ease;
+      text-decoration: none;
+    }
+    .friction-tag:hover {
+      color: #90cdf4;
+    }
+    .friction-tag.active {
+      color: #38bdf8;
+    }
+    .top-left { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+    .top-right { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; }
+    .bottom-left { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; }
+    .bottom-right { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+    @keyframes pulse-slow {
+      0%,100% { opacity: 1; } 50% { opacity: 0.6; }
+    }
+    .status-pulse { animation: pulse-slow 2s infinite; }
+    #file-upload { display: none; }
+    .export-btn-container { margin: 20px auto 0; width: calc(100% - 64px); max-width: 1200px; }
+    #exportImageBtn {
+      width: 100%; padding: 12px 30px; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+      color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;
+      transition: all 0.3s; font-weight: 600; display: flex; align-items: center;
+      justify-content: center; gap: 8px; border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+    #exportImageBtn:hover { filter: brightness(1.2); box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); }
+    #exportImageBtn:active { background: linear-gradient(135deg, #0d94d4 0%, #1e40af 100%); }
+    #exportImageBtn:disabled { opacity: 0.7; cursor: not-allowed; box-shadow: none; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 space-y-4">
+<header class="flex justify-between items-center px-4 py-2 border-b border-cyan-900/50">
+  <div class="flex items-center">
+    <h1 class="text-2xl font-bold tracking-widest text-cyan-400 glow-text">冰与金属摩擦实验数据平台</h1>
+   <div class="friction-toggle ml-6 flex items-center gap-4 text-sm">
+      <span class="friction-tag active">静摩擦</span>
+      <a id="sliding-friction-link" href="滑动摩擦.html" class="friction-tag">滑动摩擦</a>
+    </div>
+  </div>
+</header>
+
+<section class="grid grid-cols-4 gap-4 px-2">
+  <div class="tech-border relative p-3">
+    <div class="corner-decoration top-left"></div>
+    <div class="corner-decoration top-right"></div>
+    <span class="text-[10px] text-slate-500">实验批次</span>
+    <span class="text-lg font-mono text-cyan-400">EXP-20260406-001</span>
+  </div>
+  <div class="tech-border relative p-3">
+    <div class="corner-decoration top-left"></div>
+    <div class="corner-decoration top-right"></div>
+    <span class="text-[10px] text-slate-500">系统状态</span>
+    <div class="text-xs"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 status-pulse"></span>正常运行</div>
+  </div>
+  <div class="tech-border relative p-3 col-span-2">
+    <div class="corner-decoration top-left"></div>
+    <div class="corner-decoration top-right"></div>
+    <span class="text-[10px] text-slate-500">实时时钟</span>
+    <span class="text-xl font-mono text-cyan-400" id="real-time-clock"></span>
+  </div>
+</section>
+
+<main class="flex-grow grid grid-cols-12 gap-4 min-h-0">
+  <section class="col-span-4 tech-border relative flex flex-col p-5">
+    <div class="corner-decoration top-left"></div>
+    <div class="corner-decoration top-right"></div>
+    <div class="corner-decoration bottom-left"></div>
+    <div class="corner-decoration bottom-right"></div>
+    <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-3 mb-6">01 设计任务输入</h2>
+
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="text-xs text-slate-400">金属类型</label>
+          <select id="metal-type" class="w-full h-9 input-dark rounded px-3 text-sm">
+            <option>铜</option><option>铁</option><option>铝</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs text-slate-400">滑块重量m (g)</label>
+        <input id="slider-weight" class="w-full h-9 input-dark rounded px-3 text-sm" type="number" value="48">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-slate-400">V型槽张角α (°)</label>
+          <input id="v-angle" class="w-full h-9 input-dark rounded px-3 text-sm" type="number" value="12">
+        </div>
+      </div>
+
+      <div>
+        <label class="text-xs text-slate-400">分析指令</label>
+        <textarea id="prompt" class="w-full h-20 input-dark rounded px-3 text-sm p-2" placeholder="请输入你的分析需求，例如：分析摩擦稳定性、是否合理、优化建议"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <label for="file-upload" class="btn-outline py-3 rounded text-sm font-bold w-full flex justify-center items-center cursor-pointer" id="file-upload-label">
+        📤 传入实验数据文件
+      </label>
+      <input type="file" id="file-upload" accept=".csv,.txt" />
+    </div>
+
+    <button id="generate-chart-btn" class="mt-4 btn-green py-3 rounded text-sm font-bold">
+      📊 生成实验图像（基于输入参数）
+    </button>
+
+    <button id="ai-analysis-btn" class="mt-4 btn-blue py-3 rounded text-sm font-bold">
+      🤖 AI 智能分析（调用 Python 后端）
+    </button>
+
+    <div class="mt-4 p-3 bg-slate-900/50 rounded text-sm min-h-[100px]" id="ai-response">
+      AI 分析结果将显示在这里...
+    </div>
+  </section>
+
+  <section class="col-span-8 tech-border relative p-5" id="simulation-area">
+    <div class="corner-decoration top-left"></div>
+    <div class="corner-decoration top-right"></div>
+    <div class="corner-decoration bottom-left"></div>
+    <div class="corner-decoration bottom-right"></div>
+    <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-3 mb-4">02 仿真图像展示</h2>
+    <div class="w-full h-[400px] bg-slate-900/40 rounded-xl border border-dashed border-cyan-900/50 flex items-center justify-center">
+      <svg class="w-full h-full opacity-80" viewBox="0 0 800 400">
+        <rect fill="#bae6fd" fill-opacity="0.3" height="40" stroke="#7dd3fc" stroke-width="2" width="400" x="200" y="280"></rect>
+        <path d="M350,280 L450,280 L430,220 L370,220 Z" fill="#94a3b8" fill-opacity="0.4" stroke="#e2e8f0" stroke-width="2"></path>
+      </svg>
+    </div>
+  </section>
+</main>
+
+<!-- ==================== 03 实验图像生成（仅保留一张图） ==================== -->
+<div class="tech-border relative p-6 w-full" id="chart-area">
+  <div class="corner-decoration top-left"></div>
+  <div class="corner-decoration top-right"></div>
+  <div class="corner-decoration bottom-left"></div>
+  <div class="corner-decoration bottom-right"></div>
+  <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-3 mb-6">03 实验图像生成</h2>
+  <div class="grid grid-cols-1 gap-4">
+    <div class="tech-border p-4 h-[350px]">
+      <h3 class="text-md font-bold mb-3">摩擦系数-速度图像 (μ–v)</h3>
+      <div id="chart1" class="w-full h-[290px]"></div>
+    </div>
+  </div>
+</div>
+
+<div class="export-btn-container">
+  <button id="exportImageBtn">导出实验图像</button>
+</div>
+
+<script>
+// 时钟
+function updateClock() {
+  const now = new Date();
+  const formatted = now.toLocaleString('zh-CN').replace(/\//g, '-');
+  document.getElementById('real-time-clock').textContent = formatted;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ========================== 文件上传处理 ==========================
+document.addEventListener('DOMContentLoaded', function() {
+  const fileUpload = document.getElementById('file-upload');
+  const aiResponse = document.getElementById('ai-response');
+  let uploadedFileContent = null;
+  let uploadedFileName = null;
+
+  fileUpload.addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) {
+      aiResponse.innerText = 'AI 分析结果将显示在这里...';
+      uploadedFileContent = null;
+      uploadedFileName = null;
+      return;
+    }
+
+    const allowedExtensions = ['.txt', '.csv'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    if (!allowedExtensions.includes(fileExtension)) {
+      aiResponse.innerText = '❌ 不支持的文件类型！仅支持 TXT/CSV 格式';
+      uploadedFileContent = null;
+      uploadedFileName = null;
+      return;
+    }
+
+    uploadedFileName = file.name;
+    aiResponse.innerText = '📄 正在读取文件：' + file.name + '...';
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        uploadedFileContent = e.target.result;
+        const preview = uploadedFileContent.substring(0, 200);
+        aiResponse.innerText = `✅ 文件上传成功：${file.name}\n文件内容预览：\n${preview}...`;
+      } catch (err) {
+        aiResponse.innerText = '❌ 文件读取失败: ' + err.message;
+        uploadedFileContent = null;
+      }
+    };
+    reader.onerror = function() {
+      aiResponse.innerText = '❌ 文件读取失败: ' + reader.error.message;
+      uploadedFileContent = null;
+    };
+    reader.readAsText(file);
+  });
+
+  // ========================== 生成实验图像 ==========================
+  document.getElementById('generate-chart-btn').addEventListener('click', async function() {
+    const resBox = document.getElementById('ai-response');
+    resBox.innerText = "📊 正在生成实验图像...";
+
+    if (!uploadedFileContent || !uploadedFileName) {
+      resBox.innerText = '❌ 请先上传实验数据文件后再生成实验图像。';
+      return;
+    }
+
+    const params = {
+      friction_type: '滑动摩擦',  // 后端接口统一
+      metal_type: document.getElementById('metal-type').value,
+      slider_weight: document.getElementById('slider-weight').value || '48',
+      v_angle: document.getElementById('v-angle').value || '45',
+      ramp_angle: '30',           // 固定值，静摩擦不使用
+      uploaded_file_name: uploadedFileName,
+      uploaded_file_content: uploadedFileContent
+    };
+
+    try {
+      const resp = await fetch('http://127.0.0.1:5001/static-friction/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+
+      const data = await resp.json();
+      if (!resp.ok || data.status !== 'success') {
+        throw new Error(data.error || data.message || '后端返回未知错误');
+      }
+
+      // 只显示图1
+      document.getElementById('chart1').innerHTML =
+        `<img src="${data.image1}" alt="μ–v 图像" style="width:100%;height:100%;object-fit:contain;display:block;" />`;
+
+      resBox.innerText =
+        `✅ 实验图像生成成功！\n📋 金属类型：${params.metal_type}\n摩擦类型：静摩擦\n平均摩擦系数 μ = ${data.result.mu}\n剔除极值后倾角 φ2 = ${data.result.phi2}°`;
+    } catch (err) {
+      resBox.innerText = `❌ 图像生成失败：${err.message}`;
+    }
+  });
+
+  // ========================== AI 智能分析 ==========================
+  document.getElementById('ai-analysis-btn').addEventListener('click', async function() {
+    const resBox = document.getElementById('ai-response');
+    resBox.innerText = "⌛ 正在调用 Python 后端 AI 分析...";
+
+    try {
+      const params = {
+        friction_type: '静摩擦',
+        metal_type: document.getElementById('metal-type').value,
+        slider_weight: document.getElementById('slider-weight').value,
+        v_angle: document.getElementById('v-angle').value,
+        ramp_angle: '30',
+        prompt: document.getElementById('prompt').value,
+        uploaded_file_name: uploadedFileName,
+        uploaded_file_content: uploadedFileContent
+      };
+
+      const resp = await fetch('http://127.0.0.1:5000/ai-analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+
+      const data = await resp.json();
+      resBox.innerText = data.result;
+    } catch (err) {
+      resBox.innerText = "❌ 错误：请先运行 Python 后端！\n" + err.message;
+    }
+  });
+});
+
+// ========================== ECharts 占位图（仅保留 chart1） ==========================
+const chart1 = echarts.init(document.getElementById('chart1'));
+chart1.setOption({
+  backgroundColor: 'transparent',
+  textStyle: { color: '#e2e8f0' },
+  xAxis: {
+    type: 'time',
+    axisLine: { lineStyle: { color: '#475569' } },
+    axisLabel: { color: '#94a3b8' }
+  },
+  yAxis: {
+    name: '摩擦系数',
+    nameTextStyle: { color: '#94a3b8' },
+    axisLine: { lineStyle: { color: '#475569' } },
+    axisLabel: { color: '#94a3b8' },
+    splitLine: { lineStyle: { color: 'rgba(71, 85, 105, 0.2)' } }
+  },
+  series: [{
+    type: 'line',
+    data: (function(){
+      const d=[];const now=new Date();
+      for(let i=0;i<20;i++){const t=new Date(now-(20-i)*60000);d.push([t,Math.random()*0.2+0.05])}return d;
+    })(),
+    lineStyle: { color: '#22d3ee' },
+    itemStyle: { color: '#22d3ee' }
+  }]
+});
+
+// ========================== 导出实验图像 ==========================
+document.getElementById('exportImageBtn').addEventListener('click', function () {
+  const exportBtn = this;
+  const targetDom = document.getElementById('chart-area');
+
+  exportBtn.disabled = true;
+  exportBtn.innerText = '正在生成图片...';
+
+  html2canvas(targetDom, {
+    backgroundColor: '#060b19',
+    scale: 2,
+    useCORS: true,
+    logging: false
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = '冰与金属静摩擦实验图像_' + new Date().getTime() + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    exportBtn.disabled = false;
+    exportBtn.innerText = '导出实验图像';
+  }).catch(err => {
+    alert('导出失败：' + err.message);
+    exportBtn.disabled = false;
+    exportBtn.innerText = '导出实验图像';
+  });
+});
+</script>
+</body>
+</html>
