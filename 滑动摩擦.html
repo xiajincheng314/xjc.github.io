@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>冰与金属摩擦实验数据平台 - 滑动摩擦</title>
+  <script src="https://modao.cc/agent-py/static/source/js/tailwindcss.3.4.3.js"></script>
+  <script src="https://modao.cc/agent-py/static/source/js/iconify-icon.min.1.0.7.js"></script>
+  <script src="https://modao.cc/agent-py/static/source/js/echarts.min.5.4.3.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    body {
+      background-color: #060b19; color: #e2e8f0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: auto; padding-bottom: 40px;
+    }
+    .tech-border {
+      border: 1px solid rgba(34, 211, 238, 0.3);
+      background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(34, 211, 238, 0.05);
+    }
+    .glow-text { text-shadow: 0 0 10px rgba(34, 211, 238, 0.5); }
+    .input-dark {
+      background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(71, 85, 105, 0.5); color: #94a3b8;
+    }
+    .input-dark:focus { border-color: #22d3ee; outline: none; box-shadow: 0 0 10px rgba(34, 211, 238, 0.2); }
+    .btn-blue { background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); transition: all 0.3s; }
+    .btn-blue:hover { filter: brightness(1.2); box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); }
+    .btn-outline { border: 1px solid #334155; background: rgba(30, 41, 59, 0.5); transition: all 0.3s; }
+    .btn-outline:hover { border-color: #22d3ee; color: #22d3ee; }
+    .btn-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); transition: all 0.3s; }
+    .btn-green:hover { filter: brightness(1.2); box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+    .btn-red { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); transition: all 0.3s; }
+    .btn-red:hover { filter: brightness(1.2); box-shadow: 0 0 15px rgba(220, 38, 38, 0.4); }
+    .corner-decoration { position: absolute; width: 10px; height: 10px; border-color: #22d3ee; }
+    .top-left { top: -1px; left: -1px; border-top-width: 2px; border-left-width: 2px; }
+    .top-right { top: -1px; right: -1px; border-top-width: 2px; border-right-width: 2px; }
+    .bottom-left { bottom: -1px; left: -1px; border-bottom-width: 2px; border-left-width: 2px; }
+    .bottom-right { bottom: -1px; right: -1px; border-bottom-width: 2px; border-right-width: 2px; }
+    @keyframes pulse-slow { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .status-pulse { animation: pulse-slow 2s infinite; }
+    #file-upload, #file-upload-2 { display: none; }
+    .export-btn-container { margin: 20px auto 0; width: calc(100% - 64px); max-width: 1200px; }
+    #exportImageBtn {
+      width: 100%; padding: 12px 30px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+      color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;
+      transition: all 0.3s; font-weight: 600; display: flex; align-items: center;
+      justify-content: center; gap: 8px; border: 1px solid rgba(34, 211, 238, 0.3);
+    }
+    #exportImageBtn:hover { filter: brightness(1.2); box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); }
+    #exportImageBtn:active { background: linear-gradient(135deg, #0d94d4 0%, #1e40af 100%); }
+    #exportImageBtn:disabled { opacity: 0.7; cursor: not-allowed; box-shadow: none; }
+    .file-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(34, 211, 238, 0.15); border: 1px solid rgba(34, 211, 238, 0.3);
+      border-radius: 4px; padding: 4px 10px; margin: 2px; font-size: 11px;
+      max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+    }
+    .file-tag .remove-btn {
+      cursor: pointer; color: #f87171; font-weight: bold; margin-left: 4px; flex-shrink: 0;
+    }
+    .file-tag .remove-btn:hover { color: #ef4444; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 space-y-4">
+<header class="flex justify-between items-center px-4 py-2 border-b border-cyan-900/50">
+  <div>
+    <h1 class="text-2xl font-bold tracking-widest text-cyan-400 glow-text">冰与金属摩擦实验数据平台</h1>
+    
+    </div>
+    
+  </div>
+</header>
+
+<section class="grid grid-cols-4 gap-4 px-2">
+  <div class="tech-border relative p-3">
+    <div class="corner-decoration top-left"></div><div class="corner-decoration top-right"></div>
+    <span class="text-[10px] text-slate-500">实验批次</span>
+    <span class="text-lg font-mono text-cyan-400">EXP-20260406-002</span>
+  </div>
+  <div class="tech-border relative p-3">
+    <div class="corner-decoration top-left"></div><div class="corner-decoration top-right"></div>
+    <span class="text-[10px] text-slate-500">系统状态</span>
+    <div class="text-xs"><span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5 status-pulse"></span>正常运行</div>
+  </div>
+  <div class="tech-border relative p-3 col-span-2">
+    <div class="corner-decoration top-left"></div><div class="corner-decoration top-right"></div>
+    <span class="text-[10px] text-slate-500">实时时钟</span>
+    <span class="text-xl font-mono text-cyan-400" id="real-time-clock"></span>
+  </div>
+</section>
+
+<main class="flex-grow grid grid-cols-12 gap-4 min-h-0">
+  <section class="col-span-4 tech-border relative flex flex-col p-5">
+    <div class="corner-decoration top-left"></div><div class="corner-decoration top-right"></div>
+    <div class="corner-decoration bottom-left"></div><div class="corner-decoration bottom-right"></div>
+    <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-3 mb-6">01 设计任务输入</h2>
+
+    <div class="space-y-4">
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="text-xs text-slate-400">金属类型</label>
+          <select id="metal-type" class="w-full h-9 input-dark rounded px-3 text-sm">
+            <option>铜</option><option>铁</option><option>铝</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">滑块重量m (g)</label>
+        <input id="slider-weight" class="w-full h-9 input-dark rounded px-3 text-sm" type="number" value="48">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="text-xs text-slate-400">V型槽张角α (°)</label>
+          <input id="v-angle" class="w-full h-9 input-dark rounded px-3 text-sm" type="number" value="45">
+        </div>
+        <div>
+          <label class="text-xs text-slate-400">斜面倾角φ (°)</label>
+          <input id="ramp-angle" class="w-full h-9 input-dark rounded px-3 text-sm" type="number" value="25">
+        </div>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400">分析指令</label>
+        <textarea id="prompt" class="w-full h-20 input-dark rounded px-3 text-sm p-2" placeholder="请输入你的分析需求"></textarea>
+      </div>
+    </div>
+
+    <!-- 文件1 按钮：μ-|v|，支持多次累积上传 -->
+    <div class="mt-4">
+      <label for="file-upload-2" class="btn-outline py-3 rounded text-sm font-bold w-full flex justify-center items-center cursor-pointer" id="file-upload-label-2">
+        📤 传入实验数据文件(1)（μ-|v|）— 可多次上传
+      </label>
+      <input type="file" id="file-upload-2" accept=".csv,.txt" />
+    </div>
+    <div id="file1-list" class="mt-2 flex flex-wrap gap-1"></div>
+    <button id="clear-file1-btn" class="mt-1 btn-red py-1.5 rounded text-xs w-full" style="display:none;">
+      🗑 清空文件(1)列表
+    </button>
+
+    <!-- 文件2 按钮：μ-N，必须多次上传，记录每次参数 -->
+    <div class="mt-4">
+      <label for="file-upload" class="btn-outline py-3 rounded text-sm font-bold w-full flex justify-center items-center cursor-pointer" id="file-upload-label">
+        📤 传入实验数据文件(2)（μ-N）— 多次上传（记录参数）
+      </label>
+      <input type="file" id="file-upload" accept=".csv,.txt" />
+    </div>
+    <div id="file2-list" class="mt-2 flex flex-wrap gap-1"></div>
+    <button id="clear-file2-btn" class="mt-1 btn-red py-1.5 rounded text-xs w-full" style="display:none;">
+      🗑 清空文件(2)列表
+    </button>
+
+    <button id="generate-chart-btn" class="mt-4 btn-green py-3 rounded text-sm font-bold">
+      📊 生成实验图像（基于输入参数）
+    </button>
+    <button id="ai-analysis-btn" class="mt-4 btn-blue py-3 rounded text-sm font-bold">
+      🤖 AI 智能分析（调用 Python 后端）
+    </button>
+    <div class="mt-4 p-3 bg-slate-900/50 rounded text-sm min-h-[100px]" id="ai-response">
+      AI 分析结果将显示在这里...
+    </div>
+  </section>
+
+  <section class="col-span-8 tech-border relative p-5" id="simulation-area">
+    <div class="corner-decoration top-left"></div><div class="corner-decoration top-right"></div>
+    <div class="corner-decoration bottom-left"></div><div class="corner-decoration bottom-right"></div>
+    <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-3 mb-4">02 实验原理图像展示</h2>
+    <div class="w-full h-[400px] bg-slate-900/40 rounded-xl border border-dashed border-cyan-900/50 flex items-center justify-center overflow-hidden">
+      <img src="实验图像.png" alt="02 实验图像" class="w-full h-full object-contain" />
+    </div>
+  </section>
+</main>
+
+<div class="tech-border relative p-6 w-full" id="chart-area">
+  <div class="corner-decoration top-left"></div><div class="corner-decoration top-right"></div>
+  <div class="corner-decoration bottom-left"></div><div class="corner-decoration bottom-right"></div>
+  <h2 class="text-lg font-bold border-l-4 border-cyan-500 pl-3 mb-6">03 实验图像生成</h2>
+  <div class="grid grid-cols-1 gap-4">
+    <div class="tech-border p-4 h-[350px]">
+      <h3 class="text-md font-bold mb-3">摩擦系数-速度图像 (μ–|v|)</h3>
+      <div id="chart1" class="w-full h-[290px] flex items-center justify-center text-slate-500 text-sm">
+        请先上传「文件(1) μ-|v|」，再点击生成
+      </div>
+    </div>
+    <div class="tech-border p-4 h-[350px]">
+      <h3 class="text-md font-bold mb-3">摩擦系数随压力变化 (μ–N)</h3>
+      <div id="chart2" class="w-full h-[290px] flex items-center justify-center text-slate-500 text-sm">
+        请先上传「文件(2) μ-N」，再点击生成
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="export-btn-container">
+  <button id="exportImageBtn">导出实验图像</button>
+</div>
+
+<script>
+// ==================== 时钟 ====================
+function updateClock() {
+  const now = new Date();
+  document.getElementById('real-time-clock').textContent = now.toLocaleString('zh-CN').replace(/\//g, '-');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ==================== 全局状态 ====================
+let file1Groups = [];    // 文件1（μ-|v|）：[{name, content}, ...]
+let file2Groups = [];    // 文件2（μ-N）：[{name, content, params: {metal, weight, vAngle, rampAngle}}, ...]
+
+const API_UV = 'http://127.0.0.1:5004/api/analyze';
+const API_PRESSURE_MULTI = 'http://127.0.0.1:5003/pressure-friction/multi';
+
+const resBox = document.getElementById('ai-response');
+const chart1Div = document.getElementById('chart1');
+const chart2Div = document.getElementById('chart2');
+const file1ListDiv = document.getElementById('file1-list');
+const clearFile1Btn = document.getElementById('clear-file1-btn');
+const file2ListDiv = document.getElementById('file2-list');
+const clearFile2Btn = document.getElementById('clear-file2-btn');
+
+// ==================== 获取当前输入参数 ====================
+function getCurrentParams() {
+  return {
+    metal: document.getElementById('metal-type').value,
+    weight: document.getElementById('slider-weight').value || '48',
+    vAngle: document.getElementById('v-angle').value || '45',
+    rampAngle: document.getElementById('ramp-angle').value || '25'
+  };
+}
+
+// ==================== 文件1 列表渲染 ====================
+function renderFile1List() {
+  file1ListDiv.innerHTML = '';
+  if (file1Groups.length === 0) {
+    clearFile1Btn.style.display = 'none';
+    file1ListDiv.innerHTML = '<span class="text-xs text-slate-500">尚未上传任何文件</span>';
+    return;
+  }
+  clearFile1Btn.style.display = 'block';
+  file1Groups.forEach((g, idx) => {
+    const tag = document.createElement('span');
+    tag.className = 'file-tag';
+    tag.innerHTML = `${g.name} <span class="remove-btn" data-idx="${idx}">✕</span>`;
+    file1ListDiv.appendChild(tag);
+  });
+  file1ListDiv.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      file1Groups.splice(parseInt(this.getAttribute('data-idx')), 1);
+      renderFile1List();
+      updateStatus();
+    });
+  });
+}
+
+// ==================== 文件2 列表渲染 ====================
+function renderFile2List() {
+  file2ListDiv.innerHTML = '';
+  if (file2Groups.length === 0) {
+    clearFile2Btn.style.display = 'none';
+    file2ListDiv.innerHTML = '<span class="text-xs text-slate-500">尚未上传文件2</span>';
+    return;
+  }
+  clearFile2Btn.style.display = 'block';
+  file2Groups.forEach((g, idx) => {
+    const tag = document.createElement('span');
+    tag.className = 'file-tag';
+    const p = g.params;
+    tag.innerHTML = `${g.name} <small>(金属:${p.metal}, m:${p.weight}g, α:${p.vAngle}°, φ:${p.rampAngle}°)</small> <span class="remove-btn" data-idx="${idx}">✕</span>`;
+    file2ListDiv.appendChild(tag);
+  });
+  file2ListDiv.querySelectorAll('.remove-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      file2Groups.splice(parseInt(this.getAttribute('data-idx')), 1);
+      renderFile2List();
+      updateStatus();
+    });
+  });
+}
+
+// ==================== 文件1 上传（累积模式）====================
+document.getElementById('file-upload-2').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const ext = '.' + file.name.split('.').pop().toLowerCase();
+  if (!['.txt', '.csv'].includes(ext)) {
+    resBox.innerText = '❌ 文件1：不支持的文件类型！仅支持 TXT/CSV 格式';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      file1Groups.push({ name: file.name, content: e.target.result });
+      renderFile1List();
+      updateStatus();
+    } catch (err) {
+      resBox.innerText = '❌ 文件1读取失败: ' + err.message;
+    }
+  };
+  reader.onerror = function() { resBox.innerText = '❌ 文件1读取失败: ' + reader.error.message; };
+  reader.readAsText(file);
+  this.value = '';
+});
+
+// ==================== 清空文件1 ====================
+clearFile1Btn.addEventListener('click', () => { file1Groups = []; renderFile1List(); updateStatus(); });
+
+// ==================== 文件2 上传（累积 + 记录参数）====================
+document.getElementById('file-upload').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const ext = '.' + file.name.split('.').pop().toLowerCase();
+  if (!['.txt', '.csv'].includes(ext)) {
+    resBox.innerText = '❌ 文件2：不支持的文件类型！仅支持 TXT/CSV 格式';
+    return;
+  }
+  const params = getCurrentParams();   // ★ 记录此刻的输入参数
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      file2Groups.push({ name: file.name, content: e.target.result, params: params });
+      renderFile2List();
+      updateStatus();
+    } catch (err) {
+      resBox.innerText = '❌ 文件2读取失败: ' + err.message;
+    }
+  };
+  reader.onerror = function() { resBox.innerText = '❌ 文件2读取失败: ' + reader.error.message; };
+  reader.readAsText(file);
+  this.value = '';
+});
+
+// ==================== 清空文件2 ====================
+clearFile2Btn.addEventListener('click', () => { file2Groups = []; renderFile2List(); updateStatus(); });
+
+// ==================== 状态显示 ====================
+function updateStatus() {
+  let msg = '';
+  if (file1Groups.length > 0) {
+    msg += `✅ 文件1（μ-|v|）：已上传 ${file1Groups.length} 组\n`;
+    file1Groups.forEach((g, i) => { msg += `   ${i+1}. ${g.name}\n`; });
+  } else msg += '⚠️ 文件1（μ-|v|）：未上传\n';
+
+  if (file2Groups.length > 0) {
+    msg += `✅ 文件2（μ-N）：已上传 ${file2Groups.length} 组（含各自参数）\n`;
+    file2Groups.forEach((g, i) => {
+      const p = g.params;
+      msg += `   ${i+1}. ${g.name} (金属:${p.metal}, m:${p.weight}g, α:${p.vAngle}°, φ:${p.rampAngle}°)\n`;
+    });
+  } else msg += '⚠️ 文件2（μ-N）：未上传';
+  resBox.innerText = msg;
+}
+updateStatus();
+
+// ==================== 生成实验图像 ====================
+document.getElementById('generate-chart-btn').addEventListener('click', async function() {
+  let anyFile = false;
+
+  // --- 处理文件1（μ-|v|）→ 5004 ---
+  if (file1Groups.length > 0) {
+    anyFile = true;
+    chart1Div.innerHTML = '<span style="color:#22d3ee;">⏳ 正在分析 μ–|v|（多组数据）...</span>';
+    try {
+      const resp = await fetch(API_UV, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          groups: file1Groups,
+          slider_weight: document.getElementById('slider-weight').value || '48',
+          v_angle: document.getElementById('v-angle').value || '45',
+          ramp_angle: document.getElementById('ramp-angle').value || '25'
+        })
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.status !== 'success') throw new Error(data.error || data.message);
+      chart1Div.innerHTML = `<img src="${data.image1}" alt="μ–|v| 图像" style="width:100%;height:100%;object-fit:contain;display:block;" />`;
+    } catch (err) {
+      chart1Div.innerHTML = `<span style="color:#f87171;">μ–|v| 分析失败: ${err.message}</span>`;
+    }
+  } else {
+    chart1Div.innerHTML = '<span style="color:#64748b;">（未上传文件1）</span>';
+  }
+
+  // --- 处理文件2（μ-N）多组 → 5003 /pressure-friction/multi ---
+  if (file2Groups.length > 0) {
+    anyFile = true;
+    chart2Div.innerHTML = '<span style="color:#22d3ee;">⏳ 正在生成 μ–N 多组图像...</span>';
+    try {
+      const resp = await fetch(API_PRESSURE_MULTI, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groups: file2Groups })
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.status !== 'success') throw new Error(data.error || data.message);
+      chart2Div.innerHTML = `<img src="${data.image1}" alt="μ–N 图像" style="width:100%;height:100%;object-fit:contain;display:block;" />`;
+      resBox.innerText = `✅ μ–N 分析完成！${data.message}`;
+    } catch (err) {
+      chart2Div.innerHTML = `<span style="color:#f87171;">μ–N 生成失败: ${err.message}</span>`;
+    }
+  } else {
+    chart2Div.innerHTML = '<span style="color:#64748b;">（未上传文件2）</span>';
+  }
+
+  if (!anyFile) resBox.innerText = '❌ 请至少上传一个实验数据文件后再生成实验图像。';
+});
+
+// ==================== AI 智能分析 ====================
+document.getElementById('ai-analysis-btn').addEventListener('click', async function() {
+  resBox.innerText = "⌛ 正在调用 Python 后端 AI 分析...";
+  let nameToUse, contentToUse;
+  if (file2Groups.length > 0) {
+    nameToUse = file2Groups[0].name; contentToUse = file2Groups[0].content;
+  } else if (file1Groups.length > 0) {
+    nameToUse = file1Groups[0].name; contentToUse = file1Groups[0].content;
+  } else {
+    resBox.innerText = '❌ 请先上传至少一个实验数据文件！'; return;
+  }
+  try {
+    const params = {
+      friction_type: file2Groups.length > 0 ? '压力摩擦' : '滑动摩擦',
+      metal_type: document.getElementById('metal-type').value,
+      slider_weight: document.getElementById('slider-weight').value,
+      v_angle: document.getElementById('v-angle').value,
+      ramp_angle: document.getElementById('ramp-angle').value,
+      prompt: document.getElementById('prompt').value,
+      uploaded_file_name: nameToUse,
+      uploaded_file_content: contentToUse
+    };
+    const resp = await fetch('http://127.0.0.1:5000/ai-analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(params)
+    });
+    const data = await resp.json();
+    resBox.innerText = data.result;
+  } catch (err) {
+    resBox.innerText = "❌ 错误：请先运行 Python 后端！\n" + err.message;
+  }
+});
+
+// ==================== 导出图像 ====================
+document.getElementById('exportImageBtn').addEventListener('click', function () {
+  const exportBtn = this;
+  const targetDom = document.getElementById('chart-area');
+  exportBtn.disabled = true; exportBtn.innerText = '正在生成图片...';
+  html2canvas(targetDom, { backgroundColor: '#060b19', scale: 2, useCORS: true, logging: false })
+    .then(canvas => {
+      const link = document.createElement('a');
+      link.download = '冰与金属滑动摩擦实验图像_' + new Date().getTime() + '.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      exportBtn.disabled = false; exportBtn.innerText = '导出实验图像';
+    }).catch(err => {
+      alert('导出失败：' + err.message);
+      exportBtn.disabled = false; exportBtn.innerText = '导出实验图像';
+    });
+});
+</script>
+</body>
+</html>
